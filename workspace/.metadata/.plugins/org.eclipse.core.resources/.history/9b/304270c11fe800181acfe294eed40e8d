@@ -1,0 +1,33 @@
+package photo;
+
+import java.util.ArrayList;
+
+import org.jacop.constraints.Alldiff;
+import org.jacop.constraints.Constraint;
+import org.jacop.constraints.Or;
+import org.jacop.constraints.PrimitiveConstraint;
+import org.jacop.constraints.SumWeight;
+import org.jacop.constraints.XmulCeqZ;
+import org.jacop.constraints.XneqC;
+import org.jacop.constraints.XneqY;
+import org.jacop.constraints.XplusYeqZ;
+import org.jacop.core.IntVar;
+import org.jacop.core.Store;
+import org.jacop.search.DepthFirstSearch;
+import org.jacop.search.IndomainMin;
+import org.jacop.search.SelectChoicePoint;
+import org.jacop.search.SimpleSelect;
+import org.jacop.search.SmallestDomain;
+
+import search.SimpleDFS;
+
+public class Photo {
+
+	Store store;
+	
+	public static void main(String[] args) {
+		System.out.println("Det funkar fortfarande!");
+	}
+	
+	
+}
