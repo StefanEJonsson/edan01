@@ -35,13 +35,20 @@ forall(i in nbrEdges)(
   edges[i,2] = to[i] /\ 
   edges[i+n_edges,2] = from[i]);
 
-
 constraint 
 forall(i in nodes) (
-  sum(k in nbrPaths where edges[k,2] = i) (shortestPath[k]) + (if i = start then 1 else 0 endif)
-  =
-  sum(k in nbrPaths where edges[k,1] = i) (shortestPath[k]) + (if i = dest[1] then 1 else 0 endif));
-
+  if i in dest then
+    sum(k in nbrPaths where edges[k,2] = i) (shortestPath[k])
+    >=
+    1
+  else if i = start then
+    1
+    <=
+    sum(k in nbrPaths where edges[k,1] = i) (shortestPath[k]));
+  else
+    sum(k in nbrPaths where edges[k,2] = i) (shortestPath[k])
+    <=
+    sum(k in nbrPaths where edges[k,1] = i) (shortestPath[k]));
 
 var int: pathCost = sum(i in nbrEdges) (cost[i] * shortestPath[i]+ cost[i]*shortestPath[i+n_edges]);% x is shortestPath?
 
