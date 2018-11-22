@@ -1,5 +1,6 @@
 %https://github.com/hakank/hakank/blob/master/minizinc/spp.mzn
 %https://github.com/hakank/hakank/blob/master/minizinc/all_paths_graph.mzn
+include "log1.dzn";
 include "globals.mzn";
 %include "jacop.mzn";
 
@@ -11,12 +12,16 @@ int: n_edges;
 
 set of int: nbrEdges = 1..n_edges;
 set of int: nbrPaths = 1..2*n_edges;
+set of int: nodes = 1..graph_size;
+
+var set of nodes: destSet;
+constraint forall(i in dest)(i in destSet);
 
 array[nbrEdges] of int: from;
 array[nbrEdges] of int: to;
 array[nbrEdges] of int: cost;
 
-set of int: nodes = 1..graph_size;
+
 
 var int: totCost;
 
@@ -35,7 +40,8 @@ constraint forall(i in nodes)(
   if i = start then
     1 <=
     sum(k in nbrPaths where edges[k,1] = i) (shortestPath[k])
-  else if i = dest[1] \/ i = dest[2] then   % Use n_dest instead
+   else if i in destSet then
+  %else if i = dest[1] \/ i = dest[2] then   % Use n_dest instead
     sum(k in nbrPaths where edges[k,2] = i) (shortestPath[k])
     = 1
   else
@@ -55,4 +61,12 @@ var int: pathCost = sum(i in nbrEdges) (cost[i]*shortestPath[i]+ cost[i]*shortes
 
 solve minimize pathCost;
 
-output [show(pathCost), "\n", show(shortestPath), "\n", show(edges)];
+%%Print the path:
+%var set of nbrPaths: pathIndices;
+
+%array[1..sum(shortestPath)] of var int: indexArray;
+
+%constraint forall(i in nbrPaths)(
+%    if shortestPath[i] = 1 then i in indexArray endif);%
+
+output [show(pathCost), "\n", show(shortestPath), "\n", show(edges), "\n"];
