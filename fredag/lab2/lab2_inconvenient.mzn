@@ -1,4 +1,14 @@
 include "globals.mzn";
+include "log1.dzn";
+
+int: graph_size;
+int: start;
+int: n_dest;
+array [n_dest] of 1..graph_size : dest;
+int n_edges;
+array [n_edges] of 1..graph_size : from;
+array [n_edges] of 1..graph_size : to;
+array [n_edges] of 1..graph_size : cost;
 
 int: indirect_n_edges = 2*7;
 array [1..indirect_n_edges, 1..2] of int: edges = [|1,2|1,3|2,3|2,4|3,5|4,5|4,6|2,1|3,1|3,2|4,2|5,3|5,4|6,4|];
