@@ -25,7 +25,8 @@ array[1..2*n_dEdges] of 1..graph_size: flatEdges = [transposedEdges[j,i] | i in 
 
 array[1..n_dEdges,1..2] of 1..graph_size: edges = array2d(1..n_dEdges,1..2,flatEdges);
 
-array [1..n_dEdges] of int: indirect_cost =  [ 4,  2,  5,  10, 3,  4, 11, 4,  2,  5,  10, 3,  4,  11];
+%array [1..n_dEdges] of int: indirect_cost =  [ 4,  2,  5,  10, 3,  4, 11, 4,  2,  5,  10, 3,  4,  11];
+array [1..n_dEdges] of int: indirect_cost = cost ++ cost;
 
 var int: tot_cost;
 array [1..n_dEdges] of var 0..1000000: out_flow;
