@@ -31,6 +31,7 @@ constraint forall (i in nodes)(
     endif)
 );
 
+
 %create cost matrix
 array[nodes, nodes] of var 0..1000: edgeCosts;
 constraint forall (i in nbrEdges)(
@@ -39,19 +40,25 @@ constraint forall (i in nbrEdges)(
   edgeCosts[to[i], from[i]] = cost[i]
 );
 
-%create path matrix
-array[nodes, nodes] of var 0..1: fullPath;
-constraint forall (j in nbrDests)(
-  forall (i in nodes)(
-    fullPath[i, x[i,j]] = 1
-  )  
+%connects the cost of each edge to choosing a node
+array[nodes] of var int: nodeCost;
+constraint forall(i in nodes)(
+  forall(k in nbrDests)(
+    element(x[i,k], edgeCosts[i,..], nodeCost[x[i,k]])
+  )
 );
+
   
 constraint forall(k in nbrDests)(subcircuit(x[..,k]));
 
 var int: pathCost;
-constraint pathCost = sum(i in nodes)(sum(j in nodes)(fullPath[i,j] * edgeCosts[i,j]));
+constraint pathCost = sum(i in nodes)(nodeCost[i]);
 
 solve minimize pathCost; 
 
-output[show(destSet), "\n cost: ", show(pathCost), "\n", show(x[..,1])];
+%n_dest = 1:
+%output[show(destSet), "\n cost: ", show(pathCost), "\n", show(x[..,1])];
+%n_dest = 2:
+%output[show(destSet), "\n cost: ", show(pathCost), "\n", show(x[..,1]), "\n", show(x[..,2])];
+%n_dest = 3:
+output[show(destSet), "\n cost: ", show(pathCost), "\n", show(x[..,1]), "\n", show(x[..,2]), "\n", show(x[..,3])];
