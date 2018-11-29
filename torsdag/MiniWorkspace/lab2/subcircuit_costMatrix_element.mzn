@@ -1,5 +1,5 @@
 include "globals.mzn";
-include "log4.dzn";
+include "log1.dzn";
 
 int: graph_size;
 int: start;
@@ -57,8 +57,8 @@ constraint pathCost = sum(i in nodes)(nodeCost[i]);
 solve minimize pathCost; 
 
 %n_dest = 1:
-%output[show(destSet), "\n cost: ", show(pathCost), "\n", show(x[..,1])];
+output[show(destSet), "\n cost: ", show(pathCost), "\n", show(x[..,1])];
 %n_dest = 2:
 %output[show(destSet), "\n cost: ", show(pathCost), "\n", show(x[..,1]), "\n", show(x[..,2])];
 %n_dest = 3:
-output[show(destSet), "\n cost: ", show(pathCost), "\n", show(x[..,1]), "\n", show(x[..,2]), "\n", show(x[..,3])];
+%output[show(destSet), "\n cost: ", show(pathCost), "\n", show(x[..,1]), "\n", show(x[..,2]), "\n", show(x[..,3])];
