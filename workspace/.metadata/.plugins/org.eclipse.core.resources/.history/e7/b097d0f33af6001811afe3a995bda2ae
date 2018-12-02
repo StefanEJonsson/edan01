@@ -1,0 +1,22 @@
+package search;
+
+import org.jacop.constraints.Constraint;
+import org.jacop.constraints.XplusYeqC;
+import org.jacop.core.IntVar;
+import org.jacop.core.Store;
+
+public class HelloStore {
+	public static void main (String[] args) {
+		Store store = new Store();
+		IntVar[] vars = new IntVar[2];
+		
+		// Variables
+		vars[0] = new IntVar(store);
+		vars[1] = new IntVar(store);
+		
+		// Constraints
+		Constraint equation1 = new XplusYeqC(vars[0], vars[1], 5);
+		
+		store.impose();
+	}
+}

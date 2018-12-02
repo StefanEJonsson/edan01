@@ -1,0 +1,19 @@
+package search;
+
+import org.jacop.constraints.Not;
+import org.jacop.constraints.PrimitiveConstraint;
+import org.jacop.constraints.XeqC;
+import org.jacop.core.FailException;
+import org.jacop.core.IntDomain;
+import org.jacop.core.IntVar;
+import org.jacop.core.Store;
+
+public class HelloStore {
+	public static void main (String[] args) {
+		IntVar[] vars = new IntVar[2];
+		Store store = new Store();
+		
+		vars[0] = new IntVar(store);
+		store.impose(c);
+	}
+}
