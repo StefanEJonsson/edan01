@@ -96,6 +96,7 @@ public class Golomb {
      */
     public static void main(String args[]) {
 		
+    	System.out.println("Starting Golomb.");
 	Golomb example = new Golomb();
 		
 	example.model();
