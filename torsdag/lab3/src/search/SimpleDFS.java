@@ -29,6 +29,7 @@
  *
  */
 
+package search;
 import org.jacop.constraints.Not;
 import org.jacop.constraints.PrimitiveConstraint;
 import org.jacop.constraints.XeqC;

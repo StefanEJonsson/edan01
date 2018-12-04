@@ -29,7 +29,7 @@
  *
  */
 
-
+package search;
 import java.util.ArrayList;
 
 import org.jacop.constraints.Alldiff;
@@ -169,7 +169,8 @@ public class Golomb {
 
 	IntVar cost = numbers[numbers.length - 1];
 
-	SimpleDFS search = new SimpleDFS(store);
+	//SimpleDFS search = new SimpleDFS(store);
+	SplitSearch search = new SplitSearch(store);
 	search.setVariablesToReport(numbers);
 	search.setCostVariable(cost);
 
