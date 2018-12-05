@@ -57,7 +57,7 @@ public class SimpleDFS {
 	public Integer failedLeaves = 0;
 	public Integer nailedNodes = 0; // Question: How to compute this? 
 
-	public VariableSelectionMethod varSelect = new InputOrder();
+	public VariableSelectionMethod varSelect = new First();
 	public ConstraintSelectionMethod conSelect = new SmallestValue();
 	
 	
@@ -243,7 +243,7 @@ public class SimpleDFS {
 		
 	}
 	
-	class InputOrder implements VariableSelectionMethod {
+	class First implements VariableSelectionMethod {
 
 		@Override
 		public IntVar selectVariable(IntVar[] vars) {
@@ -251,16 +251,6 @@ public class SimpleDFS {
 		}
 		
 	}
-	
-	class FirstFail implements VariableSelectionMethod {
-		
-		@Override
-		public IntVar selectVariable(IntVar[] vars) {
-			return null;
-		}
-		
-	}
-	
 	
 	class SmallestValue implements ConstraintSelectionMethod {
 

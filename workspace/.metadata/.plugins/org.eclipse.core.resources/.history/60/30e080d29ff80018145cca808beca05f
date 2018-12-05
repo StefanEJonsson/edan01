@@ -41,8 +41,6 @@ import org.jacop.core.IntDomain;
 import org.jacop.core.IntVar;
 import org.jacop.core.Store;
 
-import search.SimpleDFS.ConstraintSelectionMethod.ChoicePoint;
-
 /**
  * Implements Simple Depth First Search .
  * 
@@ -57,7 +55,7 @@ public class SimpleDFS {
 	public Integer failedLeaves = 0;
 	public Integer nailedNodes = 0; // Question: How to compute this? 
 
-	public VariableSelectionMethod varSelect = new InputOrder();
+	public VariableSelectionMethod varSelect = new First();
 	public ConstraintSelectionMethod conSelect = new SmallestValue();
 	
 	
@@ -141,16 +139,16 @@ public class SimpleDFS {
 				return costVariable == null; // true is satisfiability search and false if minimization
 			}
 
-			choice = makeChoice(vars);
+			choice = new ChoicePoint(vars);
 
 			System.out.println("Level up!");
 			levelUp();
 
-			store.impose(choice.constraint);
+			store.impose(choice.getConstraint());
 
 			// choice point imposed.
 
-			consistent = label(choice.variables);
+			consistent = label(choice.getSearchVariables());
 
 			if (consistent) {
 				levelDown();
@@ -160,7 +158,7 @@ public class SimpleDFS {
 				System.out.println("Restore Level");
 				restoreLevel();
 
-				store.impose(new Not(choice.constraint));
+				store.impose(new Not(choice.getConstraint()));
 
 				// negated choice point imposed.
 
@@ -211,10 +209,12 @@ public class SimpleDFS {
 		costVariable = v;
 	}
 	
-	public ChoicePoint makeChoice(IntVar[] vars) {
+	public ConstraintSelectionMethod.ChoicePoint makeChoice(IntVar[] vars) {
 		IntVar var = varSelect.selectVariable(vars);
 		return conSelect.makeChoice(var, vars);
 	}
+
+	
 
 	
 	interface VariableSelectionMethod {
@@ -243,7 +243,7 @@ public class SimpleDFS {
 		
 	}
 	
-	class InputOrder implements VariableSelectionMethod {
+	class First implements VariableSelectionMethod {
 
 		@Override
 		public IntVar selectVariable(IntVar[] vars) {
@@ -251,16 +251,6 @@ public class SimpleDFS {
 		}
 		
 	}
-	
-	class FirstFail implements VariableSelectionMethod {
-		
-		@Override
-		public IntVar selectVariable(IntVar[] vars) {
-			return null;
-		}
-		
-	}
-	
 	
 	class SmallestValue implements ConstraintSelectionMethod {
 
@@ -281,24 +271,10 @@ public class SimpleDFS {
 			if(var.min() == var.max()) {
 				vars = remove(vars,var);
 			}
-			return new ChoicePoint(vars,new XlteqC(var,value));
-		}
-		
-	}
-	
-	class UpperHalfOfDomain implements ConstraintSelectionMethod {
-
-		@Override
-		public ChoicePoint makeChoice(IntVar var, IntVar[] vars) {
-			int value = (var.min() + var.max()) / 2;
-			if(var.min() == var.max()) {
-				vars = remove(vars,var);
-			}
 			return new ChoicePoint(vars,new XgteqC(var,value));
 		}
 		
 	}
-	
 	
 	public IntVar[] remove(IntVar[] vars, IntVar var) {
 		IntVar[] res = new IntVar[vars.length-1];

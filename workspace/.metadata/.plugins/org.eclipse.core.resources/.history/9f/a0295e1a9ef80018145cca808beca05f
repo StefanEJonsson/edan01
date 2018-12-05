@@ -33,15 +33,11 @@ package search;
 
 import org.jacop.constraints.Not;
 import org.jacop.constraints.PrimitiveConstraint;
-import org.jacop.constraints.XeqC;
-import org.jacop.constraints.XgteqC;
 import org.jacop.constraints.XlteqC;
 import org.jacop.core.FailException;
 import org.jacop.core.IntDomain;
 import org.jacop.core.IntVar;
 import org.jacop.core.Store;
-
-import search.SimpleDFS.ConstraintSelectionMethod.ChoicePoint;
 
 /**
  * Implements Simple Depth First Search .
@@ -57,8 +53,8 @@ public class SimpleDFS {
 	public Integer failedLeaves = 0;
 	public Integer nailedNodes = 0; // Question: How to compute this? 
 
-	public VariableSelectionMethod varSelect = new InputOrder();
-	public ConstraintSelectionMethod conSelect = new SmallestValue();
+	public VariableSelectionMethod varSelect = null;
+	public ConstraintSelectionMethod conSelect = null;
 	
 	
 	boolean trace = true;
@@ -141,16 +137,16 @@ public class SimpleDFS {
 				return costVariable == null; // true is satisfiability search and false if minimization
 			}
 
-			choice = makeChoice(vars);
+			choice = new ChoicePoint(vars);
 
 			System.out.println("Level up!");
 			levelUp();
 
-			store.impose(choice.constraint);
+			store.impose(choice.getConstraint());
 
 			// choice point imposed.
 
-			consistent = label(choice.variables);
+			consistent = label(choice.getSearchVariables());
 
 			if (consistent) {
 				levelDown();
@@ -160,7 +156,7 @@ public class SimpleDFS {
 				System.out.println("Restore Level");
 				restoreLevel();
 
-				store.impose(new Not(choice.constraint));
+				store.impose(new Not(choice.getConstraint()));
 
 				// negated choice point imposed.
 
@@ -211,11 +207,79 @@ public class SimpleDFS {
 		costVariable = v;
 	}
 	
-	public ChoicePoint makeChoice(IntVar[] vars) {
+	public ConstraintSelectionMethod.ChoicePoint makeChoice(IntVar[] vars) {
 		IntVar var = varSelect.selectVariable(vars);
 		return conSelect.makeChoice(var, vars);
 	}
 
+	public class ChoicePoint {
+
+		IntVar var;
+		IntVar[] searchVariables;
+		int value;
+
+		public ChoicePoint(IntVar[] v) {
+			var = selectVariable(v);
+			value = selectValue(var);
+		}
+
+		public IntVar[] getSearchVariables() {
+			return searchVariables;
+		}
+
+		/**
+		 * example variable selection; input order
+		 */
+		IntVar selectVariable(IntVar[] v) {
+			if (v.length != 0) {
+
+				searchVariables = v;
+				/*
+				searchVariables = new IntVar[v.length - 1];
+				for (int i = 0; i < v.length - 1; i++) {
+					searchVariables[i] = v[i + 1];
+				}
+				*/
+
+				return v[0];
+
+			} else {
+				System.err.println("Zero length list of variables for labeling");
+				return new IntVar(store);
+			}
+		}
+
+		/**
+		 * example value selection; indomain_min
+		 */
+		int selectValue(IntVar v) {
+			//return v.min();
+			int value = (v.min() + v.max()) / 2;
+			if(v.min() == v.max()) {
+				IntVar[] searchVariables2 = new IntVar[searchVariables.length - 1];
+				for (int i = 0; i < searchVariables.length - 1; i++) {
+					searchVariables2[i] = searchVariables[i + 1];
+				}
+				searchVariables = searchVariables2;
+			}
+			return value;
+		}
+
+		/**
+		 * example constraint assigning a selected value
+		 */
+		public PrimitiveConstraint getConstraint() {
+			// The line below narrows the interval and starts looking in lower half
+			return new XlteqC(var, value);
+			
+			// The line below starts off from the upper half
+			//return new XgteqC(var, value);
+			//return new XeqC(var, value);
+		}
+		
+		/*public void getChosenVar () {
+		}*/
+	}
 	
 	interface VariableSelectionMethod {
 		
@@ -239,11 +303,9 @@ public class SimpleDFS {
 			
 		}
 		
-		
-		
 	}
 	
-	class InputOrder implements VariableSelectionMethod {
+	class First implements VariableSelectionMethod {
 
 		@Override
 		public IntVar selectVariable(IntVar[] vars) {
@@ -252,66 +314,24 @@ public class SimpleDFS {
 		
 	}
 	
-	class FirstFail implements VariableSelectionMethod {
-		
-		@Override
-		public IntVar selectVariable(IntVar[] vars) {
-			return null;
-		}
-		
-	}
-	
-	
 	class SmallestValue implements ConstraintSelectionMethod {
 
 		@Override
 		public ChoicePoint makeChoice(IntVar var, IntVar[] vars) {
-			return new ChoicePoint(remove(vars,var),new XeqC(var,var.min()));
+			return new ChoicePoint(new XeqC(var,var.min()),tail(vars));
 		}
 		
-		
-		
-	}
-	
-	class LowerHalfOfDomain implements ConstraintSelectionMethod {
-
-		@Override
-		public ChoicePoint makeChoice(IntVar var, IntVar[] vars) {
-			int value = (var.min() + var.max()) / 2;
-			if(var.min() == var.max()) {
-				vars = remove(vars,var);
+		private IntVar[] tail(IntVar[] vars) {
+			IntVar[] res = new IntVar[vars.length-1];
+			for(int i = 0; i < res.length; i++) {
+				res[i] = vars[i+1];
 			}
-			return new ChoicePoint(vars,new XlteqC(var,value));
+			return res;
 		}
 		
-	}
-	
-	class UpperHalfOfDomain implements ConstraintSelectionMethod {
-
-		@Override
-		public ChoicePoint makeChoice(IntVar var, IntVar[] vars) {
-			int value = (var.min() + var.max()) / 2;
-			if(var.min() == var.max()) {
-				vars = remove(vars,var);
-			}
-			return new ChoicePoint(vars,new XgteqC(var,value));
-		}
+		
 		
 	}
-	
-	
-	public IntVar[] remove(IntVar[] vars, IntVar var) {
-		IntVar[] res = new IntVar[vars.length-1];
-		int j = 0;
-		for(int i = 0; i < vars.length; i++) {
-			if(vars[i] != var) {
-				res[j] = vars[i];
-				j++;
-			} 
-		}
-		return res;
-	}
-
 	
 	
 	

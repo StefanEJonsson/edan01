@@ -252,14 +252,7 @@ public class SimpleDFS {
 		
 	}
 	
-	class FirstFail implements VariableSelectionMethod {
-		
-		@Override
-		public IntVar selectVariable(IntVar[] vars) {
-			return null;
-		}
-		
-	}
+
 	
 	
 	class SmallestValue implements ConstraintSelectionMethod {
