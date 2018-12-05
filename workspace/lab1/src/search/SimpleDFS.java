@@ -236,11 +236,7 @@ public class SimpleDFS {
 				variables = vars;
 				constraint = c;
 			}
-			
 		}
-		
-		
-		
 	}
 	
 	class InputOrder implements VariableSelectionMethod {

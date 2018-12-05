@@ -1,4 +1,3 @@
-//OLD DESC:
 /**
  *  SimpleDFS.java 
  *  This file is part of JaCoP.
@@ -35,6 +34,8 @@ package search;
 import org.jacop.constraints.Not;
 import org.jacop.constraints.PrimitiveConstraint;
 import org.jacop.constraints.XeqC;
+import org.jacop.constraints.XgteqC;
+import org.jacop.constraints.XlteqC;
 import org.jacop.core.FailException;
 import org.jacop.core.IntDomain;
 import org.jacop.core.IntVar;
@@ -48,6 +49,8 @@ import org.jacop.core.Store;
  */
 
 public class SplitSearch {
+
+	int failCount = 0;
 
 	boolean trace = false;
 
@@ -97,14 +100,13 @@ public class SplitSearch {
 		// Instead of imposing constraint just restrict bounds
 		// -1 since costValue is the cost of last solution
 		if (costVariable != null) {
-			int c = (costVariable.max() + costVariable.min()) / 2;
 			try {
-
-				costVariable.domain.in(store.level, costVariable, costVariable.min(), c);
-				//ändra choice point? se handledning
-
+				if (costVariable.min() <= costValue - 1)
+					costVariable.domain.in(store.level, costVariable, costVariable.min(), costValue - 1);
+				else
+					return false;
 			} catch (FailException f) {
-				costVariable.domain.in(store.level, costVariable, c, costVariable.max());
+				return false;
 			}
 		}
 
@@ -112,6 +114,7 @@ public class SplitSearch {
 
 		if (!consistent) {
 			// Failed leaf of the search tree
+			failCount++;
 			return false;
 		} else { // consistent
 
@@ -141,7 +144,7 @@ public class SplitSearch {
 				levelDown();
 				return true;
 			} else {
-
+				// failCount++;
 				restoreLevel();
 
 				store.impose(new Not(choice.getConstraint()));
@@ -155,6 +158,7 @@ public class SplitSearch {
 				if (consistent) {
 					return true;
 				} else {
+					failCount++;
 					return false;
 				}
 			}
@@ -194,13 +198,19 @@ public class SplitSearch {
 
 	public class ChoicePoint {
 
+		static final int order = 0, splitLT = 1, splitGT = 2;
+		static final int InputOrder = 0, FirstFail = 1;
+
+		int selection = InputOrder;
+		int algo = splitGT;
+
 		IntVar var;
 		IntVar[] searchVariables;
 		int value;
 
-		public ChoicePoint(IntVar[] v) {
-			var = selectVariable(v);
-			value = selectValue(var);
+		public ChoicePoint(IntVar[] vars) {
+			var = selectVariable(vars);
+			value = selectValue(var, vars);
 		}
 
 		public IntVar[] getSearchVariables() {
@@ -210,34 +220,68 @@ public class SplitSearch {
 		/**
 		 * example variable selection; input order
 		 */
-		IntVar selectVariable(IntVar[] v) {
-			if (v.length != 0) {
-
-				searchVariables = new IntVar[v.length - 1];
-				for (int i = 0; i < v.length - 1; i++) {
-					searchVariables[i] = v[i + 1];
+		IntVar selectVariable(IntVar[] vars) {
+			
+			if (selection == FirstFail) {
+				IntVar first = vars[0];
+				int cost = first.max() - first.min();
+				for (int i = 1; i < vars.length; i++) {
+					IntVar second = vars[i];
+					int newCost = second.max() - second.min();
+					if (newCost < cost) {
+						first = second;
+						cost = newCost;
+					}
 				}
-
-				return v[0];
-
-			} else {
-				System.err.println("Zero length list of variables for labeling");
-				return new IntVar(store);
+				return first;
 			}
+			
+			return vars[0]; //inputorder
 		}
 
 		/**
 		 * example value selection; indomain_min
+		 * @param vars 
 		 */
-		int selectValue(IntVar v) {
-			return v.min();
+		int selectValue(IntVar var, IntVar[] vars) {
+			int val = 0;
+			if (algo == splitLT || algo == splitGT) {
+				val = (var.min() + var.max()) / 2;
+				if (var.min() == var.max()) 
+					vars = delete(vars, var);			
+			} else { //smallestValue
+				val = var.min();
+				vars = delete(vars, var);
+			}
+			searchVariables = vars;
+			return val;
+			
 		}
 
 		/**
 		 * example constraint assigning a selected value
 		 */
 		public PrimitiveConstraint getConstraint() {
-			return new XeqC(var, value);
+			switch (algo) {
+			case 1:
+				return new XlteqC(var, value);
+			case 2:
+				return new XgteqC(var, value);
+			default:
+				return new XeqC(var, value);
+			}
+		}
+
+		public IntVar[] delete(IntVar[] vars, IntVar var) {
+			IntVar[] temp = new IntVar[vars.length - 1];
+			int n = 0;
+			for (int m = 0; m < vars.length; m++) {
+				if (vars[m] != var) {
+					temp[n] = vars[m];
+					n++;
+				}
+			}
+			return temp;
 		}
 	}
 }

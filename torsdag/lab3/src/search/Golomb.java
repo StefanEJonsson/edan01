@@ -176,8 +176,8 @@ public class Golomb {
 
 	boolean result = search.label(numbers);
 	
-	System.out.println (result);
-
+	System.out.println(result);
+	System.out.println(search.failCount);
     }
 	
 	
