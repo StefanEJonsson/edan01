@@ -29,8 +29,6 @@
  *
  */
 
-package search;
-
 import org.jacop.constraints.Not;
 import org.jacop.constraints.PrimitiveConstraint;
 import org.jacop.constraints.XeqC;
@@ -117,10 +115,8 @@ public class SplitSearch {
 			failCount++;
 			return false;
 		} else { // consistent
-
 			if (vars.length == 0) {
 				// solution found; no more variables to label
-
 				// update cost if minimization
 				if (costVariable != null)
 					costValue = costVariable.min();
@@ -134,11 +130,11 @@ public class SplitSearch {
 
 			levelUp();
 
-			store.impose(choice.getConstraint());
+			store.impose(choice.cnstraint);
 
 			// choice point imposed.
 
-			consistent = label(choice.getSearchVariables());
+			consistent = label(choice.searchVariables);
 
 			if (consistent) {
 				levelDown();
@@ -147,7 +143,7 @@ public class SplitSearch {
 				// failCount++;
 				restoreLevel();
 
-				store.impose(new Not(choice.getConstraint()));
+				store.impose(new Not(choice.cnstraint));
 
 				// negated choice point imposed.
 
@@ -198,30 +194,37 @@ public class SplitSearch {
 
 	public class ChoicePoint {
 
-		static final int order = 0, splitLT = 1, splitGT = 2;
+		static final int smallestValue = 0, splitLT = 1, splitGT = 2;
 		static final int InputOrder = 0, FirstFail = 1;
 
 		int selection = InputOrder;
-		int algo = splitGT;
+		int algo = splitLT;
 
-		IntVar var;
+		IntVar crnt;
 		IntVar[] searchVariables;
-		int value;
+		PrimitiveConstraint cnstraint;
+		int val;
 
 		public ChoicePoint(IntVar[] vars) {
-			var = selectVariable(vars);
-			value = selectValue(var, vars);
+			crnt = selectVariable(vars); // ChoicePoint makeChoice(IntVar[] vars)
+			searchVariables = vars;
+			val = selectValue(crnt, vars);
+			//System.out.println(""  + vars[0]);
+		
+			cnstraint = getConstraint(crnt);
+//			System.out.println("crnt: " + crnt + ", val: " + val);
+//			System.out.println("searchVariables: " + searchVariables[0] + searchVariables[1] + searchVariables[2]);
 		}
 
-		public IntVar[] getSearchVariables() {
-			return searchVariables;
-		}
+//		public IntVar[] getSearchVariables() {
+//			return searchVariables;
+//		}
 
 		/**
 		 * example variable selection; input order
 		 */
 		IntVar selectVariable(IntVar[] vars) {
-			
+			//System.out.println("select: " + vars[0] + vars[1] + vars[2]);
 			if (selection == FirstFail) {
 				IntVar first = vars[0];
 				int cost = first.max() - first.min();
@@ -235,7 +238,6 @@ public class SplitSearch {
 				}
 				return first;
 			}
-			
 			return vars[0]; //inputorder
 		}
 
@@ -244,31 +246,39 @@ public class SplitSearch {
 		 * @param vars 
 		 */
 		int selectValue(IntVar var, IntVar[] vars) {
-			int val = 0;
+			int tempVal = 0;
 			if (algo == splitLT || algo == splitGT) {
-				val = (var.min() + var.max()) / 2;
-				if (var.min() == var.max()) 
-					vars = delete(vars, var);			
+				tempVal = (var.min() + var.max()) / 2;
+				if (var.min() == var.max()) {
+					System.out.println("delete " + var);
+					vars = delete(vars, var);
+					searchVariables = vars;
+				}
 			} else { //smallestValue
-				val = var.min();
+				tempVal = var.min();
+				//System.out.println("delete");
 				vars = delete(vars, var);
+				searchVariables = vars;
+				//System.out.println("" + vars[0]);
 			}
-			searchVariables = vars;
-			return val;
+			//System.out.println("" + tempVal);
+			return tempVal;
 			
 		}
 
 		/**
 		 * example constraint assigning a selected value
 		 */
-		public PrimitiveConstraint getConstraint() {
+		public PrimitiveConstraint getConstraint(IntVar var) {
 			switch (algo) {
 			case 1:
-				return new XlteqC(var, value);
+				return new XlteqC(var, val);
 			case 2:
-				return new XgteqC(var, value);
+				System.out.println("" + var + val);
+				return new XgteqC(var, val);
 			default:
-				return new XeqC(var, value);
+				//System.out.println("var = " + var + ", val = " + val);
+				return new XeqC(var, val);
 			}
 		}
 
