@@ -47,6 +47,11 @@ import org.jacop.core.Store;
  */
 
 public class SimpleDFS {
+	
+	public Integer nodeCount = 0;
+	public Integer failedNodes = 0;
+	public Integer failedLeaves = 0;
+	public Integer nailedNodes = 0; // Question: How to compute this? 
 
 	boolean trace = true;
 
@@ -83,6 +88,7 @@ public class SimpleDFS {
 	 * This function is called recursively to assign variables one by one.
 	 */
 	public boolean label(IntVar[] vars) {
+		nodeCount ++;
 
 		if (trace) {
 			for (int i = 0; i < vars.length; i++)
@@ -109,10 +115,12 @@ public class SimpleDFS {
 		consistent = store.consistency();
 
 		if (!consistent) {
+			failedLeaves ++;
+			failedNodes ++;
+			System.out.println("Fail!");
 			// Failed leaf of the search tree
 			return false;
 		} else { // consistent
-
 			if (vars.length == 0) {
 				// solution found; no more variables to label
 
@@ -127,6 +135,7 @@ public class SimpleDFS {
 
 			choice = new ChoicePoint(vars);
 
+			System.out.println("Level up!");
 			levelUp();
 
 			store.impose(choice.getConstraint());
@@ -140,6 +149,7 @@ public class SimpleDFS {
 				return true;
 			} else {
 
+				System.out.println("Restore Level");
 				restoreLevel();
 
 				store.impose(new Not(choice.getConstraint()));
@@ -148,11 +158,14 @@ public class SimpleDFS {
 
 				consistent = label(vars);
 
+				System.out.println ("Level Down");
 				levelDown();
 
 				if (consistent) {
 					return true;
 				} else {
+					System.out.println("Fail!!");
+					failedNodes ++;
 					return false;
 				}
 			}
@@ -211,10 +224,13 @@ public class SimpleDFS {
 		IntVar selectVariable(IntVar[] v) {
 			if (v.length != 0) {
 
+				searchVariables = v;
+				/*
 				searchVariables = new IntVar[v.length - 1];
 				for (int i = 0; i < v.length - 1; i++) {
 					searchVariables[i] = v[i + 1];
 				}
+				*/
 
 				return v[0];
 
@@ -229,16 +245,32 @@ public class SimpleDFS {
 		 */
 		int selectValue(IntVar v) {
 			//return v.min();
-			return (v.min() + v.max()) / 2;
+			int value = (v.min() + v.max()) / 2;
+			if(v.min() == v.max()) {
+				IntVar[] searchVariables2 = new IntVar[searchVariables.length - 1];
+				for (int i = 0; i < searchVariables.length - 1; i++) {
+					searchVariables2[i] = searchVariables[i + 1];
+				}
+				searchVariables = searchVariables2;
+			}
+			return value;
 		}
 
 		/**
 		 * example constraint assigning a selected value
 		 */
 		public PrimitiveConstraint getConstraint() {
+			// The line below narrows the interval and starts looking in lower half
 			return new XlteqC(var, value);
+			
+			// The line below starts off from the upper half
 			//return new XgteqC(var, value);
 			//return new XeqC(var, value);
 		}
+		
+		/*public void getChosenVar () {
+		}*/
 	}
+	
+	
 }

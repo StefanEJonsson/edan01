@@ -179,6 +179,9 @@ public class Golomb {
 	boolean result = search.label(numbers);
 	
 	System.out.println (result);
+	System.out.println ("Failed Leaves: " + search.failedLeaves);
+	System.out.println ("Failed Nodes: " + search.failedNodes);
+	System.out.println ("Total Node Count: " + search.nodeCount);
 
     }
 	
