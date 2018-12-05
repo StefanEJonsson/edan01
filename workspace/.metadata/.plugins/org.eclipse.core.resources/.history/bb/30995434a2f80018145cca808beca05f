@@ -58,7 +58,7 @@ public class SimpleDFS {
 	public Integer nailedNodes = 0; // Question: How to compute this? 
 
 	public VariableSelectionMethod varSelect = new FirstFail();
-	public ConstraintSelectionMethod conSelect = new LowerHalfOfDomain();
+	public ConstraintSelectionMethod conSelect = new SmallestValue();
 	
 	
 	boolean trace = true;
