@@ -197,8 +197,8 @@ public class SplitSearch {
 		static final int smallestValue = 0, splitLT = 1, splitGT = 2;
 		static final int InputOrder = 0, FirstFail = 1;
 
-		int selection = InputOrder;
-		int algo = splitLT;
+		int selection = FirstFail;
+		int algo = splitGT;
 
 		IntVar crnt;
 		IntVar[] searchVariables;
@@ -247,11 +247,20 @@ public class SplitSearch {
 		 */
 		int selectValue(IntVar var, IntVar[] vars) {
 			int tempVal = 0;
-			if (algo == splitLT || algo == splitGT) {
-				tempVal = (var.min() + var.max()) / 2;if(algo==splitGT&&var.max() - var.min() == 1){tempVal = var.max();}
-				
+			if (algo == splitLT) {
+				tempVal = (var.min() + var.max()) / 2;
 				if (var.min() == var.max()) {
 					System.out.println("delete " + var);
+					vars = delete(vars, var);
+					searchVariables = vars;
+				}
+			} else if (algo == splitGT) {
+				int t = var.min() + var.max();
+				//System.out.println("t=" + t);
+				tempVal = (t%2 == 0 ? t/2 : (t+1)/2);
+				//System.out.println("tempVal=" + tempVal);
+				if (var.min() == var.max()) {
+					//System.out.println("delete " + var);
 					vars = delete(vars, var);
 					searchVariables = vars;
 				}
@@ -275,7 +284,7 @@ public class SplitSearch {
 			case 1:
 				return new XlteqC(var, val);
 			case 2:
-				System.out.println("" + var + val);
+				//System.out.println("" + var + val);
 				return new XgteqC(var, val);
 			default:
 				//System.out.println("var = " + var + ", val = " + val);
