@@ -248,7 +248,8 @@ public class SplitSearch {
 		int selectValue(IntVar var, IntVar[] vars) {
 			int tempVal = 0;
 			if (algo == splitLT || algo == splitGT) {
-				tempVal = (var.min() + var.max()) / 2;
+				tempVal = (var.min() + var.max()) / 2;if(algo==splitGT&&var.max() - var.min() == 1){tempVal = var.max();}
+				
 				if (var.min() == var.max()) {
 					System.out.println("delete " + var);
 					vars = delete(vars, var);
