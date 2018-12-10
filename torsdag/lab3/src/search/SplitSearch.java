@@ -1,34 +1,3 @@
-/**
- *  SimpleDFS.java 
- *  This file is part of JaCoP.
- *
- *  JaCoP is a Java Constraint Programming solver. 
- *	
- *	Copyright (C) 2000-2008 Krzysztof Kuchcinski and Radoslaw Szymanek
- *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU Affero General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Affero General Public License for more details.
- *  
- *  Notwithstanding any other provision of this License, the copyright
- *  owners of this work supplement the terms of this License with terms
- *  prohibiting misrepresentation of the origin of this work and requiring
- *  that modified versions of this work be marked in reasonable ways as
- *  different from the original version. This supplement of the license
- *  terms is in accordance with Section 7 of GNU Affero General Public
- *  License version 3.
- *
- *  You should have received a copy of the GNU Affero General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- */
-
 package search;
 
 import org.jacop.constraints.Not;
@@ -51,6 +20,7 @@ import org.jacop.core.Store;
 public class SplitSearch {
 
 	int failCount = 0;
+	int nodeCount = 0;
 
 	boolean trace = false;
 
@@ -87,6 +57,7 @@ public class SplitSearch {
 	 * This function is called recursively to assign variables one by one.
 	 */
 	public boolean label(IntVar[] vars) {
+		nodeCount++;
 
 		if (trace) {
 			for (int i = 0; i < vars.length; i++)
@@ -117,16 +88,12 @@ public class SplitSearch {
 			failCount++;
 			return false;
 		} else { // consistent
-
 			if (vars.length == 0) {
 				// solution found; no more variables to label
-
 				// update cost if minimization
 				if (costVariable != null)
 					costValue = costVariable.min();
-
 				reportSolution();
-
 				return costVariable == null; // true is satisfiability search and false if minimization
 			}
 
@@ -134,27 +101,22 @@ public class SplitSearch {
 
 			levelUp();
 
-			store.impose(choice.getConstraint());
+			store.impose(choice.cnstraint);
 
 			// choice point imposed.
 
-			consistent = label(choice.getSearchVariables());
+			consistent = label(choice.searchVariables);
 
 			if (consistent) {
 				levelDown();
 				return true;
 			} else {
-				// failCount++;
+				failCount++;
 				restoreLevel();
-
-				store.impose(new Not(choice.getConstraint()));
-
+				store.impose(new Not(choice.cnstraint));
 				// negated choice point imposed.
-
 				consistent = label(vars);
-
 				levelDown();
-
 				if (consistent) {
 					return true;
 				} else {
@@ -198,30 +160,34 @@ public class SplitSearch {
 
 	public class ChoicePoint {
 
-		static final int order = 0, splitLT = 1, splitGT = 2;
+		static final int SmallestValue = 0, SplitLT = 1, SplitGT = 2;
 		static final int InputOrder = 0, FirstFail = 1;
 
-		int selection = InputOrder;
-		int algo = splitGT;
+		int selection = FirstFail;
+		int algo = SplitLT;
 
-		IntVar var;
+		IntVar crnt;
 		IntVar[] searchVariables;
-		int value;
+		PrimitiveConstraint cnstraint;
+		int val;
 
 		public ChoicePoint(IntVar[] vars) {
-			var = selectVariable(vars);
-			value = selectValue(var, vars);
+			crnt = selectVariable(vars); // ChoicePoint makeChoice(IntVar[] vars)
+			searchVariables = vars;
+			val = selectValue(crnt, vars);
+		
+			cnstraint = getConstraint(crnt);
 		}
 
-		public IntVar[] getSearchVariables() {
-			return searchVariables;
-		}
+//		public IntVar[] getSearchVariables() {
+//			return searchVariables;
+//		}
 
 		/**
 		 * example variable selection; input order
 		 */
 		IntVar selectVariable(IntVar[] vars) {
-			
+			//System.out.println("select: " + vars[0] + vars[1] + vars[2]);
 			if (selection == FirstFail) {
 				IntVar first = vars[0];
 				int cost = first.max() - first.min();
@@ -235,7 +201,6 @@ public class SplitSearch {
 				}
 				return first;
 			}
-			
 			return vars[0]; //inputorder
 		}
 
@@ -244,31 +209,42 @@ public class SplitSearch {
 		 * @param vars 
 		 */
 		int selectValue(IntVar var, IntVar[] vars) {
-			int val = 0;
-			if (algo == splitLT || algo == splitGT) {
-				val = (var.min() + var.max()) / 2;
-				if (var.min() == var.max()) 
-					vars = delete(vars, var);			
+			int tempVal = 0;
+			if (algo == SplitLT) {
+				tempVal = (var.min() + var.max()) / 2;
+				if (var.min() == var.max()) {
+					vars = delete(vars, var);
+					searchVariables = vars;
+				}
+			} else if (algo == SplitGT) {
+				int t = var.min() + var.max();
+				tempVal = (t%2 == 0 ? t/2 : (t+1)/2);
+				if (var.min() == var.max()) {
+					vars = delete(vars, var);
+					searchVariables = vars;
+				}
 			} else { //smallestValue
-				val = var.min();
+				tempVal = var.min();
 				vars = delete(vars, var);
+				searchVariables = vars;
 			}
-			searchVariables = vars;
-			return val;
+			return tempVal;
 			
 		}
 
 		/**
 		 * example constraint assigning a selected value
 		 */
-		public PrimitiveConstraint getConstraint() {
+		public PrimitiveConstraint getConstraint(IntVar var) {
 			switch (algo) {
 			case 1:
-				return new XlteqC(var, value);
+				return new XlteqC(var, val);
 			case 2:
-				return new XgteqC(var, value);
+				//System.out.println("" + var + val);
+				return new XgteqC(var, val);
 			default:
-				return new XeqC(var, value);
+				//System.out.println("var = " + var + ", val = " + val);
+				return new XeqC(var, val);
 			}
 		}
 
