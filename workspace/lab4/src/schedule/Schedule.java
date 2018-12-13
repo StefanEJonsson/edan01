@@ -72,7 +72,7 @@ public int[][] dependencies = {
 	public void model() {
 		store = new Store();
 
-		IntVar[] vars = new IntVar[4*n];
+		IntVar[] vars = new IntVar[2*n];
 		
 		IntVar[][] rects = new IntVar[n][];
 		
@@ -94,10 +94,10 @@ public int[][] dependencies = {
 			rects[i][1] = y;
 			rects[i][2] = dx;
 			rects[i][3] = dy;
-			vars[i*4 + 0] = x;
-			vars[i*4 + 1] = y;
-			vars[i*4 + 2] = dx;
-			vars[i*4 + 3] = dy;
+			vars[i*2 + 0] = x;
+			vars[i*2 + 1] = y;
+			//vars[i*4 + 2] = dx;
+			//vars[i*4 + 3] = dy;
 		}
 		
 		Constraint diffn = new Diffn(rects);

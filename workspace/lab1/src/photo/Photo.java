@@ -109,11 +109,11 @@ public class Photo {
 		SelectChoicePoint<IntVar> select = new SimpleSelect<IntVar>(position, new SmallestDomain<IntVar>(),
 				new IndomainMin<IntVar>());
 		Search<IntVar> label = new DepthFirstSearch<IntVar>();
-		 System.out.println("starting search");
+		//System.out.println("starting search");
 		boolean result = label.labeling(store, select, costA);
 
-		System.out.println("Det funkar fortfarande!");
-		System.out.println(result);
+		//System.out.println("Det funkar fortfarande!");
+		//System.out.println(result);
 
 	}
 
