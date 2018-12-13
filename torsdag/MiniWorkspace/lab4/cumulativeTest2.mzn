@@ -32,25 +32,25 @@ constraint forall (i in ops)(
 constraint cumulative(start, duration, neededAdd, number_add);
 constraint cumulative(start, duration, neededMul, number_mul);
 
-array[ops] of var 1..(number_add + number_mul): y;
-constraint forall(a in add)(y[a] in 1..number_add);
-constraint forall(m in mul)(y[m] in (number_add+1)..(number_add+number_mul));
-constraint diffn(start, y, duration, neededAdd);
-constraint diffn(start, y, duration, neededMul);
+array[ops] of var 0..number_add: y_add;
+array[ops] of var 0..number_mul: y_mul;
+constraint forall(a in add)(y_add[a] in 1..number_add /\ y_mul[a] = 0);
+constraint forall(m in mul)(y_mul[m] in 1..number_mul /\ y_add[m] = 0);
+constraint diffn(start, y_add, duration, neededAdd);
+constraint diffn(start, y_mul, duration, neededMul);
 
 array[1..length(last)] of var 0..1000: ends = [start[i]+duration[i] | i in last];
 constraint max(ends) = end;
 
-solve minimize end;
-%set of 0..10: slize = 2..3 union {5};
+solve::seq_search([
+    int_search(start, first_fail, indomain_min, complete),
+    int_search(y_mul++y_add, first_fail, indomain_min, complete)
+])
+ minimize end;
+
 output ["start = ", show(start), 
 "\nend = ", show(end), 
 "\n\nends:", show(ends),
-%"\nneeded:", show(needed),
-%"\nstart[add] = ", show(start[add]),
-%"\nslize = ", show(slize),
-%"\nstart[{2..3} union {5}] = ", show(start[slize]),
-%"\nduration[add] = ", show(duration[add]),
-%"\nneeded[add] = ", show(needed[add]),
-%"\nnumber_add = ", show(number_add),
+"\ny_add:", show(y_add),
+"\ny_mul:", show(y_mul),
 ];
